@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import CalendarGrid from '@/components/Calendar/CalendarGrid';
 import Sidebar from '@/components/Sidebar/Sidebar';
-import { Event, Task } from '@/lib/types';
+import { Event, Task, Goal } from '@/lib/types';
 import { mockEvents, mockGoals, mockTasks } from '@/lib/mockData';
 import EventModal from '@/components/Calendar/EventModal';
 import { useToast } from '@/components/ui/use-toast';
@@ -13,6 +13,7 @@ const Index = () => {
   const [draggedTask, setDraggedTask] = useState<Task | null>(null);
   const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
   const [selectedTimeSlot, setSelectedTimeSlot] = useState<{ startTime: string; endTime: string } | null>(null);
+  const [activeGoal, setActiveGoal] = useState<Goal | null>(null);
   
   const { toast } = useToast();
 
@@ -59,6 +60,11 @@ const Index = () => {
   // Handle task drag start
   const handleTaskDragStart = (task: Task) => {
     setDraggedTask(task);
+  };
+  
+  // Handle goal selection
+  const handleGoalSelect = (goal: Goal | null) => {
+    setActiveGoal(goal);
   };
   
   // Handle drop on calendar
@@ -113,6 +119,8 @@ const Index = () => {
         goals={mockGoals} 
         tasks={mockTasks} 
         onTaskDragStart={handleTaskDragStart}
+        selectedGoalId={activeGoal?.id || null}
+        onGoalSelect={handleGoalSelect}
       />
       
       {/* Calendar */}
@@ -122,6 +130,7 @@ const Index = () => {
           onEventCreate={handleEventCreate}
           onEventUpdate={handleEventUpdate}
           onEventDelete={handleEventDelete}
+          onCalendarDrop={handleCalendarDrop}
         />
       </div>
       
@@ -134,6 +143,8 @@ const Index = () => {
         }}
         onSave={handleCreateEventFromTask}
         selectedTime={selectedTimeSlot || undefined}
+        initialTitle={draggedTask?.title}
+        initialCategory={activeGoal && mockGoals.find(g => g.id === draggedTask?.goalId)?.title.toLowerCase() as any}
       />
     </div>
   );

@@ -14,6 +14,8 @@ interface EventModalProps {
   onDelete?: () => void;
   initialEvent?: Event;
   selectedTime?: { startTime: string; endTime: string };
+  initialTitle?: string;
+  initialCategory?: Category;
 }
 
 const EventModal = ({
@@ -23,6 +25,8 @@ const EventModal = ({
   onDelete,
   initialEvent,
   selectedTime,
+  initialTitle = '',
+  initialCategory,
 }: EventModalProps) => {
   const [title, setTitle] = useState('');
   const [category, setCategory] = useState<Category>('work');
@@ -37,15 +41,19 @@ const EventModal = ({
       setCategory(initialEvent.category);
       setStartTime(initialEvent.startTime);
       setEndTime(initialEvent.endTime);
-      setFormattedStartDate(format(parseISO(initialEvent.startTime), 'MM/dd/yyyy HH:mm'));
-      setFormattedEndDate(format(parseISO(initialEvent.endTime), 'MM/dd/yyyy HH:mm'));
+      setFormattedStartDate(format(parseISO(initialEvent.startTime), 'yyyy-MM-dd\'T\'HH:mm'));
+      setFormattedEndDate(format(parseISO(initialEvent.endTime), 'yyyy-MM-dd\'T\'HH:mm'));
     } else if (selectedTime) {
       setStartTime(selectedTime.startTime);
       setEndTime(selectedTime.endTime);
-      setFormattedStartDate(format(parseISO(selectedTime.startTime), 'MM/dd/yyyy HH:mm'));
-      setFormattedEndDate(format(parseISO(selectedTime.endTime), 'MM/dd/yyyy HH:mm'));
+      setFormattedStartDate(format(parseISO(selectedTime.startTime), 'yyyy-MM-dd\'T\'HH:mm'));
+      setFormattedEndDate(format(parseISO(selectedTime.endTime), 'yyyy-MM-dd\'T\'HH:mm'));
+      
+      // Set initial title and category if provided (for task drag & drop)
+      if (initialTitle) setTitle(initialTitle);
+      if (initialCategory) setCategory(initialCategory);
     }
-  }, [initialEvent, selectedTime, isOpen]);
+  }, [initialEvent, selectedTime, isOpen, initialTitle, initialCategory]);
 
   const handleSave = () => {
     const eventData = {
@@ -96,7 +104,7 @@ const EventModal = ({
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle>
-            {initialEvent ? 'Edit Event' : 'Create New Event'}
+            {initialEvent ? 'Edit Event' : initialTitle ? 'Schedule Task' : 'Create New Event'}
           </DialogTitle>
         </DialogHeader>
         
@@ -167,7 +175,7 @@ const EventModal = ({
               Cancel
             </Button>
             <Button onClick={handleSave}>
-              {initialEvent ? 'Update' : 'Create'} Event
+              {initialEvent ? 'Update' : initialTitle ? 'Schedule' : 'Create'} Event
             </Button>
           </div>
         </DialogFooter>

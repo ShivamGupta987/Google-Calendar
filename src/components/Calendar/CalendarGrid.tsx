@@ -1,4 +1,3 @@
-
 import React, { useState, useCallback } from 'react';
 import { format, addDays, startOfWeek, getHours, getMinutes, parseISO, isSameDay, setHours, setMinutes } from 'date-fns';
 import { Event as EventType, TimeSlot } from '@/lib/types';
@@ -13,9 +12,16 @@ interface CalendarGridProps {
   onEventCreate: (event: Omit<EventType, 'id'>) => void;
   onEventUpdate: (event: EventType) => void;
   onEventDelete: (id: string) => void;
+  onCalendarDrop?: (e: React.DragEvent, day: Date, hour: number) => void;
 }
 
-const CalendarGrid = ({ events, onEventCreate, onEventUpdate, onEventDelete }: CalendarGridProps) => {
+const CalendarGrid = ({ 
+  events, 
+  onEventCreate, 
+  onEventUpdate, 
+  onEventDelete,
+  onCalendarDrop 
+}: CalendarGridProps) => {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedEvent, setSelectedEvent] = useState<EventType | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -71,6 +77,18 @@ const CalendarGrid = ({ events, onEventCreate, onEventUpdate, onEventDelete }: C
     setSelectedEvent(null);
     setIsModalOpen(true);
   };
+  
+  // Handle drag over for time slots
+  const handleDragOver = useCallback((e: React.DragEvent) => {
+    e.preventDefault(); // Allow drop
+  }, []);
+  
+  // Handle drop on time slot
+  const handleDrop = useCallback((e: React.DragEvent, day: Date, timeSlot: TimeSlot) => {
+    if (onCalendarDrop) {
+      onCalendarDrop(e, day, timeSlot.hour);
+    }
+  }, [onCalendarDrop]);
   
   // Handle event creation
   const handleSaveEvent = (eventData: Omit<EventType, 'id'>) => {
@@ -179,6 +197,8 @@ const CalendarGrid = ({ events, onEventCreate, onEventUpdate, onEventDelete }: C
                       isSameDay(day, new Date()) && "bg-blue-50"
                     )}
                     onClick={() => handleTimeSlotClick(day, timeSlot)}
+                    onDragOver={handleDragOver}
+                    onDrop={(e) => handleDrop(e, day, timeSlot)}
                   >
                     {/* Events in this slot */}
                     {eventsForSlot.map((event) => (

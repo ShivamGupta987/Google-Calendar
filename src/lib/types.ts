@@ -8,6 +8,7 @@ export interface Event {
   startTime: string; // ISO string
   endTime: string; // ISO string
   taskId?: string; // Optional reference to a task
+  color?: string; // Color for task-related events
 }
 
 export interface Task {

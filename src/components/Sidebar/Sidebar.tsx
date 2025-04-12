@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Goal, Task } from '@/lib/types';
 import GoalItem from './GoalItem';
 import TaskItem from './TaskItem';
@@ -8,13 +8,20 @@ interface SidebarProps {
   goals: Goal[];
   tasks: Task[];
   onTaskDragStart: (task: Task) => void;
+  selectedGoalId: string | null;
+  onGoalSelect: (goal: Goal | null) => void;
 }
 
-const Sidebar = ({ goals, tasks, onTaskDragStart }: SidebarProps) => {
-  const [selectedGoalId, setSelectedGoalId] = useState<string | null>(null);
+const Sidebar = ({ 
+  goals, 
+  tasks, 
+  onTaskDragStart, 
+  selectedGoalId,
+  onGoalSelect 
+}: SidebarProps) => {
   
-  const handleGoalClick = (goalId: string) => {
-    setSelectedGoalId(prevId => prevId === goalId ? null : goalId);
+  const handleGoalClick = (goal: Goal) => {
+    onGoalSelect(selectedGoalId === goal.id ? null : goal);
   };
   
   const filteredTasks = selectedGoalId 
@@ -36,7 +43,7 @@ const Sidebar = ({ goals, tasks, onTaskDragStart }: SidebarProps) => {
               key={goal.id} 
               goal={goal} 
               isSelected={selectedGoalId === goal.id}
-              onClick={() => handleGoalClick(goal.id)}
+              onClick={() => handleGoalClick(goal)}
             />
           ))}
         </div>

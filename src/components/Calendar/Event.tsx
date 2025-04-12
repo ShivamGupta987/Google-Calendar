@@ -28,6 +28,7 @@ const Event = ({ event, onClick }: EventProps) => {
           "bg-category-social text-white": event.category === 'social',
         }
       )}
+      style={event.taskId ? { backgroundColor: event.color } : {}}
       onClick={onClick}
     >
       <div className="font-bold">{event.title}</div>
