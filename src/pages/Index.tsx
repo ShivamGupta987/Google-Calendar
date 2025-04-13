@@ -1,59 +1,161 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import CalendarGrid from '@/components/Calendar/CalendarGrid';
 import Sidebar from '@/components/Sidebar/Sidebar';
 import { Event, Task, Goal } from '@/lib/types';
-import { mockEvents, mockGoals, mockTasks } from '@/lib/mockData';
 import EventModal from '@/components/Calendar/EventModal';
 import { useToast } from '@/components/ui/use-toast';
+import { 
+  fetchEvents, 
+  fetchGoals, 
+  fetchTasks, 
+  createEvent as apiCreateEvent, 
+  updateEvent as apiUpdateEvent, 
+  deleteEvent as apiDeleteEvent 
+} from '@/lib/api';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
 const Index = () => {
-  const [events, setEvents] = useState<Event[]>(mockEvents);
   const [draggedTask, setDraggedTask] = useState<Task | null>(null);
   const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
   const [selectedTimeSlot, setSelectedTimeSlot] = useState<{ startTime: string; endTime: string } | null>(null);
   const [activeGoal, setActiveGoal] = useState<Goal | null>(null);
   
   const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  // Fetch data using React Query
+  const { 
+    data: events = [], 
+    isLoading: isEventsLoading,
+    error: eventsError
+  } = useQuery({
+    queryKey: ['events'],
+    queryFn: fetchEvents
+  });
+
+  const { 
+    data: goals = [], 
+    isLoading: isGoalsLoading,
+    error: goalsError
+  } = useQuery({
+    queryKey: ['goals'],
+    queryFn: fetchGoals
+  });
+
+  const { 
+    data: tasks = [], 
+    isLoading: isTasksLoading,
+    error: tasksError
+  } = useQuery({
+    queryKey: ['tasks'],
+    queryFn: fetchTasks
+  });
+
+  // Show error toasts if any fetch fails
+  useEffect(() => {
+    if (eventsError) {
+      toast({
+        title: "Error fetching events",
+        description: "Please check your connection and try again.",
+        variant: "destructive",
+      });
+    }
+    if (goalsError) {
+      toast({
+        title: "Error fetching goals",
+        description: "Please check your connection and try again.",
+        variant: "destructive",
+      });
+    }
+    if (tasksError) {
+      toast({
+        title: "Error fetching tasks",
+        description: "Please check your connection and try again.",
+        variant: "destructive",
+      });
+    }
+  }, [eventsError, goalsError, tasksError, toast]);
+
+  // Event mutations
+  const createEventMutation = useMutation({
+    mutationFn: (eventData: Omit<Event, 'id'>) => apiCreateEvent(eventData),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['events'] });
+    },
+    onError: () => {
+      toast({
+        title: "Error Creating Event",
+        description: "There was an error creating the event. Please try again.",
+        variant: "destructive",
+      });
+    }
+  });
+
+  const updateEventMutation = useMutation({
+    mutationFn: (event: Event) => apiUpdateEvent(event.id, event),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['events'] });
+    },
+    onError: () => {
+      toast({
+        title: "Error Updating Event",
+        description: "There was an error updating the event. Please try again.",
+        variant: "destructive",
+      });
+    }
+  });
+
+  const deleteEventMutation = useMutation({
+    mutationFn: (eventId: string) => apiDeleteEvent(eventId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['events'] });
+    },
+    onError: () => {
+      toast({
+        title: "Error Deleting Event",
+        description: "There was an error deleting the event. Please try again.",
+        variant: "destructive",
+      });
+    }
+  });
 
   // Handle event creation
   const handleEventCreate = (eventData: Omit<Event, 'id'>) => {
-    const newEvent: Event = {
-      ...eventData,
-      id: uuidv4(),
-    };
-    
-    setEvents(prevEvents => [...prevEvents, newEvent]);
-    toast({
-      title: "Event Created",
-      description: `${newEvent.title} has been added to your calendar.`,
+    createEventMutation.mutate(eventData, {
+      onSuccess: (data) => {
+        toast({
+          title: "Event Created",
+          description: `${data.title} has been added to your calendar.`,
+        });
+      }
     });
   };
   
   // Handle event update
   const handleEventUpdate = (updatedEvent: Event) => {
-    setEvents(prevEvents =>
-      prevEvents.map(event =>
-        event.id === updatedEvent.id ? updatedEvent : event
-      )
-    );
-    
-    toast({
-      title: "Event Updated",
-      description: `${updatedEvent.title} has been updated.`,
+    updateEventMutation.mutate(updatedEvent, {
+      onSuccess: (data) => {
+        toast({
+          title: "Event Updated",
+          description: `${data.title} has been updated.`,
+        });
+      }
     });
   };
   
   // Handle event deletion
   const handleEventDelete = (eventId: string) => {
     const eventToDelete = events.find(event => event.id === eventId);
-    setEvents(prevEvents => prevEvents.filter(event => event.id !== eventId));
-    
-    toast({
-      title: "Event Deleted",
-      description: eventToDelete ? `${eventToDelete.title} has been deleted.` : "Event has been deleted.",
-      variant: "destructive",
+    deleteEventMutation.mutate(eventId, {
+      onSuccess: () => {
+        toast({
+          title: "Event Deleted",
+          description: eventToDelete ? `${eventToDelete.title} has been deleted.` : "Event has been deleted.",
+          variant: "destructive",
+        });
+      }
     });
   };
   
@@ -95,29 +197,39 @@ const Index = () => {
   const handleCreateEventFromTask = (eventData: Omit<Event, 'id'>) => {
     if (!draggedTask) return;
     
-    const newEvent: Event = {
+    const eventWithTask = {
       ...eventData,
-      id: uuidv4(),
       title: eventData.title || draggedTask.title,
       taskId: draggedTask.id,
     };
     
-    setEvents(prevEvents => [...prevEvents, newEvent]);
-    setDraggedTask(null);
-    setIsTaskModalOpen(false);
-    
-    toast({
-      title: "Task Added to Calendar",
-      description: `${newEvent.title} has been added to your calendar.`,
+    createEventMutation.mutate(eventWithTask, {
+      onSuccess: (data) => {
+        setDraggedTask(null);
+        setIsTaskModalOpen(false);
+        toast({
+          title: "Task Added to Calendar",
+          description: `${data.title} has been added to your calendar.`,
+        });
+      }
     });
   };
+
+  // Show loading state
+  if (isEventsLoading || isGoalsLoading || isTasksLoading) {
+    return (
+      <div className="flex h-screen w-full items-center justify-center">
+        <div className="text-xl font-semibold">Loading calendar data...</div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex h-screen w-full overflow-hidden">
       {/* Sidebar */}
       <Sidebar 
-        goals={mockGoals} 
-        tasks={mockTasks} 
+        goals={goals} 
+        tasks={tasks} 
         onTaskDragStart={handleTaskDragStart}
         selectedGoalId={activeGoal?.id || null}
         onGoalSelect={handleGoalSelect}
@@ -144,7 +256,7 @@ const Index = () => {
         onSave={handleCreateEventFromTask}
         selectedTime={selectedTimeSlot || undefined}
         initialTitle={draggedTask?.title}
-        initialCategory={activeGoal && mockGoals.find(g => g.id === draggedTask?.goalId)?.title.toLowerCase() as any}
+        initialCategory={activeGoal && goals.find(g => g.id === draggedTask?.goalId)?.title.toLowerCase() as any}
       />
     </div>
   );
