@@ -36,8 +36,8 @@ const Sidebar = ({
   return (
     <div className="w-64 border-r h-full overflow-y-auto bg-gray-50 flex flex-col">
       <div className="p-4 border-b">
-        <h2 className="text-lg font-semibold text-gray-800">GOALS</h2>
-        <div className="mt-2 space-y-1">
+        <h2 className="text-lg font-bold text-gray-800 mb-3">GOALS</h2>
+        <div className="space-y-1">
           {goals.map(goal => (
             <GoalItem 
               key={goal.id} 
@@ -50,8 +50,8 @@ const Sidebar = ({
       </div>
       
       <div className="p-4 flex-1">
-        <h2 className="text-lg font-semibold text-gray-800">TASKS</h2>
-        <div className="mt-2 space-y-1">
+        <h2 className="text-lg font-bold text-gray-800 mb-3">TASKS</h2>
+        <div className="space-y-1">
           {filteredTasks.map(task => (
             <TaskItem 
               key={task.id} 

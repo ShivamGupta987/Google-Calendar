@@ -18,14 +18,14 @@ const TaskItem = ({ task, goalColor, onDragStart }: TaskItemProps) => {
   return (
     <div 
       className={cn(
-        "flex items-center p-2 rounded-md cursor-pointer border border-gray-200 mb-1",
-        "hover:bg-gray-100 transition-colors"
+        "flex items-center p-2 rounded-md cursor-pointer border mb-1",
+        "hover:bg-gray-50 transition-colors"
       )}
       draggable
       onDragStart={handleDragStart}
     >
       <div 
-        className="w-4 h-4 rounded-full mr-2" 
+        className="w-4 h-4 rounded-full mr-3" 
         style={{ backgroundColor: goalColor }}
       />
       <span className="text-sm font-medium">{task.title}</span>

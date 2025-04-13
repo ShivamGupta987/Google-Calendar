@@ -11,11 +11,13 @@ interface GoalItemProps {
 const GoalItem = ({ goal, isSelected, onClick }: GoalItemProps) => {
   return (
     <div 
-      className={`flex items-center p-2 rounded-md cursor-pointer ${isSelected ? 'bg-gray-200' : 'hover:bg-gray-100'}`}
+      className={`flex items-center p-2 rounded-md cursor-pointer mb-1 border ${
+        isSelected ? 'bg-gray-100 border-gray-300' : 'hover:bg-gray-50 border-transparent'
+      }`}
       onClick={onClick}
     >
       <div 
-        className="w-4 h-4 rounded-full mr-2" 
+        className="w-4 h-4 rounded-full mr-3" 
         style={{ backgroundColor: goal.color }}
       />
       <span className="text-sm font-medium">{goal.title}</span>
