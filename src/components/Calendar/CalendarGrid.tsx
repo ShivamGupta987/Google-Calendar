@@ -36,21 +36,31 @@ const CalendarGrid = ({
   
   // Helper to check if an event belongs to the given day and time
   const eventBelongsToTimeSlot = (event: EventType, day: Date, timeSlot: TimeSlot) => {
-    const eventStart = parseISO(event.startTime);
-    const eventEnd = parseISO(event.endTime);
+    // Validate event start and end times
+    if (!event.startTime || !event.endTime) {
+      return false;
+    }
     
-    // Check if the event is on this day
-    if (!isSameDay(eventStart, day)) return false;
-    
-    // Check if the event starts at or before this time slot and ends after this time slot
-    const startHour = getHours(eventStart);
-    const endHour = getHours(eventEnd);
-    
-    return (
-      (startHour === timeSlot.hour && getMinutes(eventStart) === timeSlot.minute) ||
-      (startHour < timeSlot.hour && endHour > timeSlot.hour) ||
-      (startHour === timeSlot.hour && getMinutes(eventStart) < timeSlot.minute)
-    );
+    try {
+      const eventStart = parseISO(event.startTime);
+      const eventEnd = parseISO(event.endTime);
+      
+      // Check if the event is on this day
+      if (!isSameDay(eventStart, day)) return false;
+      
+      // Check if the event starts at or before this time slot and ends after this time slot
+      const startHour = getHours(eventStart);
+      const endHour = getHours(eventEnd);
+      
+      return (
+        (startHour === timeSlot.hour && getMinutes(eventStart) === timeSlot.minute) ||
+        (startHour < timeSlot.hour && endHour > timeSlot.hour) ||
+        (startHour === timeSlot.hour && getMinutes(eventStart) < timeSlot.minute)
+      );
+    } catch (error) {
+      console.error('Error parsing event dates:', error, event);
+      return false;
+    }
   };
   
   // Get events for a specific day and time slot
